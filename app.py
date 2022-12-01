@@ -1,8 +1,11 @@
 import streamlit as st
+import subprocess
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 # tokenizer = AutoTokenizer.from_pretrained("./distilbartTokenizer_v1")
 tokenizer = AutoTokenizer.from_pretrained("sshleifer/distilbart-cnn-12-6")
+
+subprocess.call(['python -m spacy download en_core_web_sm'],shell=True)
 
 import spacy
 from spacy.lang.en.stop_words import STOP_WORDS
