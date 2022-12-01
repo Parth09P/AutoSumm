@@ -139,12 +139,6 @@ def main():
                 value=(10, 100),)
                 do_sample = st.checkbox("Use sampling")
 
-                # Every form must have a submit button.
-                submitted = st.form_submit_button("Submit")
-                if submitted:
-                    st.write("slider", slider_val, "checkbox", checkbox_val)
-        
-
         sentence = st.text_area('Please type your article :', height=400)
         button_txt = st.button("Summarize text")
 
