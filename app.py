@@ -132,12 +132,12 @@ def main():
         'Select',
         ['Simple', 'Advanced'])
         if option == 'Advanced':
-            with st.form("my_form"):
-                min, max = st.select_slider(
-                'Select a range of length',
-                options=[i for i in range(10, 501, 10)],
-                value=(10, 100),)
-                do_sample = st.checkbox("Use sampling")
+            # with st.form("my_form"):
+            min, max = st.select_slider(
+            'Select a range of length',
+            options=[i for i in range(10, 501, 10)],
+            value=(10, 100),)
+            do_sample = st.checkbox("Use sampling")
 
         sentence = st.text_area('Please type your article :', height=400)
         button_txt = st.button("Summarize text")
