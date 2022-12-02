@@ -54,7 +54,7 @@ def extr_summ(doc, n):
 @st.cache(allow_output_mutation=True)
 def load_summarizer():
     # model = pipeline("summarization")
-    # model = AutoModelForSeq2SeqLM.from_pretrained("./distilbartModel_v1")
+    # model = AutoModelForSeq2SeqLM.from_pretrained("../../distilbartModel_v1")
     model = AutoModelForSeq2SeqLM.from_pretrained("sshleifer/distilbart-cnn-12-6")
 
     return model
@@ -166,11 +166,13 @@ def main():
                 st.write(text)
     
     with tab2:
-        sentence = st.text_area('Please paste your URL :', height=30)
+        sentence = st.text_input('Please paste your URL :')
         #Example = "https://towardsdatascience.com/a-bayesian-take-on-model-regularization-9356116b6457"
         # https://medium.com/@randylaosat/a-beginners-guide-to-machine-learning-dfadc19f6caf
         button_URL = st.button("Summarize URL")
-
+        min = 50
+        max = 100
+        
         # max_url = st.sidebar.slider('Select max', 50, 500, step=10, value=150)
         # min_url = st.sidebar.slider('Select min', 10, 450, step=10, value=50)
         # do_sample = st.sidebar.checkbox("Do sample", value=False)
@@ -182,20 +184,22 @@ def main():
                 except ValueError:
                     st.error("Please enter a valid input")
                     return
-                # print(sents_count)
-                # if len(sents_count) < 6:
-                #     print("Extractive Summarization", len(sents_count))
-                #     text = extr_summ(sentence, len(sents_count))
-                # else:
-                print("Abstractive Summarization")
-                chunks = generate_chunks(url)
-                print(f'Chunks length : {len(chunks)}')
-                # chunks = extr_summ(sentence, len(sentence) )
-                # print(f'Extractive Summary : \n{chunks}\n')
-                res = summarizer(chunks, )
-                text = ' '.join([summ['summary_text'] for summ in res])
-                # print(f'\nAbstractive Summary : \n{text}\n')
-                # st.write(result[0]['summary_text'])
+
+                if len(sents_count) < 6:
+                    print("Extractive Summarization", len(sents_count))
+                    text = extr_summ(url, len(sents_count) // 2)
+                else:
+                    print("Abstractive Summarization")
+                    chunks = generate_chunks(url)
+                    len_chunks = len(chunks)
+                    print(f'Chunks length : {len_chunks}')
+                    # chunks = extr_summ(sentence, len(sentence) )
+                    # print(f'Extractive Summary : \n{chunks}\n')
+                    # res = summarizer(chunks, min_length=100, max_length=200,temperature=2.0, top_k = 50, top_p = 0.2, repetition_penalty = 10.0)
+                    res = gen_summary(summarizer, chunks, len_chunks, (min, max))
+                    text = ' '.join(res)
+                    # print(f'\nAbstractive Summary : \n{text}\n')
+                    # st.write(result[0]['summary_text'])
                 st.write(text)
 
 if __name__ == '__main__':
