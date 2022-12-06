@@ -17,7 +17,9 @@ from spacy.lang.en.examples import sentences
 nlp = spacy.load("en_core_web_sm")
 from bs4 import BeautifulSoup #to help with the web scraping
 import requests #make http request to the web and 
+
 def extr_summ(doc, n):
+    print('Number of sentences required : ',n)
     doc = nlp(doc)
 
     keyword = []
@@ -48,6 +50,7 @@ def extr_summ(doc, n):
     summarized_sentences = nlargest(n, sent_strength, key=sent_strength.get)
 
     final_sentences = [ w.text for w in summarized_sentences ]
+    print('Final Sentences:\n',final_sentences)
     summary = ' '.join(final_sentences)
     return summary
 
@@ -129,15 +132,22 @@ def main():
         max = 100
         do_sample = False
         option = st.selectbox(
-        'Select',
-        ['Simple', 'Advanced'])
-        if option == 'Advanced':
+        'Select choice of parameters',
+        ['Default Parameters', 'Configurable Parameters'])
+        if option == 'Configurable Parameters':
             # with st.form("my_form"):
-            min, max = st.select_slider(
-            'Select a range of length',
-            options=[i for i in range(10, 501, 10)],
-            value=(10, 100),)
-            do_sample = st.checkbox("Use sampling")
+            type = st.radio(
+            "Choose type of summarization",
+            ('Abstractive Summarization', 'Extractive Summarization'))
+
+            if type == 'Abstractive Summarization':
+                min, max = st.select_slider(
+                'Select a range of length',
+                options=[i for i in range(10, 501, 10)],
+                value=(10, 100),)
+                # do_sample = st.checkbox("Use sampling")
+            else:
+                k = st.number_input('Insert number of sentences', min_value = 1, step = 1)
 
         sentence = st.text_area('Please type your article :', height=400)
         button_txt = st.button("Summarize text")
@@ -148,30 +158,61 @@ def main():
         with st.spinner("Generating Summary.."):
             if button_txt and sentence:
                 # print(url[:500])
-                if len(sents_count) < 6:
-                    print("Extractive Summarization", len(sents_count))
-                    text = extr_summ(sentence, len(sents_count) // 2)
+                if option == "Configurable Parameters":
+                    if type == 'Extractive Summarization':
+                        print("Extractive Summarization", len(sents_count))
+                        text = extr_summ(sentence, k if k else len(sents_count) // 2)
+                    else:
+                        print("Abstractive Summarization")
+                        chunks = generate_chunks(sentence)
+                        len_chunks = len(chunks)
+                        print(f'Chunks length : {len_chunks}')
+                        res = gen_summary(summarizer, chunks, len_chunks, (min, max))
+                        text = ' '.join(res)
+                    st.write(text)
                 else:
-                    print("Abstractive Summarization")
-                    chunks = generate_chunks(sentence)
-                    len_chunks = len(chunks)
-                    print(f'Chunks length : {len_chunks}')
-                    # chunks = extr_summ(sentence, len(sentence) )
-                    # print(f'Extractive Summary : \n{chunks}\n')
-                    # res = summarizer(chunks, min_length=100, max_length=200,temperature=2.0, top_k = 50, top_p = 0.2, repetition_penalty = 10.0)
-                    res = gen_summary(summarizer, chunks, len_chunks, (min, max))
-                    text = ' '.join(res)
-                    # print(f'\nAbstractive Summary : \n{text}\n')
-                    # st.write(result[0]['summary_text'])
-                st.write(text)
+                    if len(sents_count) < 6:
+                        print("Extractive Summarization", len(sents_count))
+                        text = extr_summ(sentence, len(sents_count) // 2)
+                    else:
+                        print("Abstractive Summarization")
+                        chunks = generate_chunks(sentence)
+                        len_chunks = len(chunks)
+                        print(f'Chunks length : {len_chunks}')
+                        res = gen_summary(summarizer, chunks, len_chunks, (min, max))
+                        text = ' '.join(res)
+                    st.write(text)
     
     with tab2:
-        sentence = st.text_input('Please paste your URL :')
-        #Example = "https://towardsdatascience.com/a-bayesian-take-on-model-regularization-9356116b6457"
-        # https://medium.com/@randylaosat/a-beginners-guide-to-machine-learning-dfadc19f6caf
-        button_URL = st.button("Summarize URL")
         min = 50
         max = 100
+
+        do_sample = False
+        option_url = st.selectbox(
+        'Select choice of parameters',
+        ['Default Parameters', 'Configurable Parameters'],
+        key = 'urlBox')
+        if option_url == 'Configurable Parameters':
+            # with st.form("my_form"):
+            type = st.radio(
+            "Choose type of summarization",
+            ('Abstractive Summarization', 'Extractive Summarization'),
+            key = 'urlButtons')
+
+            if type == 'Abstractive Summarization':
+                min, max = st.select_slider(
+                'Select a range of length',
+                options=[i for i in range(10, 501, 10)],
+                value=(10, 100),
+                key = 'urlSlider',)
+                # do_sample = st.checkbox("Use sampling")
+            else:
+                k = st.number_input('Insert number of sentences', min_value = 1, step = 1)
+        sentence = st.text_input('Please paste your URL :')
+        #Example = https://towardsdatascience.com/a-bayesian-take-on-model-regularization-9356116b6457
+        # https://medium.com/@randylaosat/a-beginners-guide-to-machine-learning-dfadc19f6caf
+        button_URL = st.button("Summarize URL")
+        
         
         # max_url = st.sidebar.slider('Select max', 50, 500, step=10, value=150)
         # min_url = st.sidebar.slider('Select min', 10, 450, step=10, value=50)
@@ -181,26 +222,35 @@ def main():
                 try:
                     url = get_text_from_URL(sentence)
                     sents_count = tokenize.sent_tokenize(url)
+                    print('Split:\n', sents_count)
                 except ValueError:
                     st.error("Please enter a valid input")
                     return
 
-                if len(sents_count) < 6:
-                    print("Extractive Summarization", len(sents_count))
-                    text = extr_summ(url, len(sents_count) // 2)
+                if option_url == "Configurable Parameters":
+                    if type == 'Extractive Summarization':
+                        print("Extractive Summarization with config :", len(sents_count))
+                        text = extr_summ(' '.join(sents_count), k )
+                    else:
+                        print("Abstractive Summarization")
+                        chunks = generate_chunks(''.join(sents_count))
+                        len_chunks = len(chunks)
+                        print(f'Chunks length : {len_chunks}')
+                        res = gen_summary(summarizer, chunks, len_chunks, (min, max))
+                        text = ' '.join(res)
+                    st.write(text)
                 else:
-                    print("Abstractive Summarization")
-                    chunks = generate_chunks(url)
-                    len_chunks = len(chunks)
-                    print(f'Chunks length : {len_chunks}')
-                    # chunks = extr_summ(sentence, len(sentence) )
-                    # print(f'Extractive Summary : \n{chunks}\n')
-                    # res = summarizer(chunks, min_length=100, max_length=200,temperature=2.0, top_k = 50, top_p = 0.2, repetition_penalty = 10.0)
-                    res = gen_summary(summarizer, chunks, len_chunks, (min, max))
-                    text = ' '.join(res)
-                    # print(f'\nAbstractive Summary : \n{text}\n')
-                    # st.write(result[0]['summary_text'])
-                st.write(text)
+                    if len(sents_count) < 6:
+                        print("Extractive Summarization default :", len(sents_count))
+                        text = extr_summ(url, len(sents_count) // 2)
+                    else:
+                        print("Abstractive Summarization")
+                        chunks = generate_chunks(url)
+                        len_chunks = len(chunks)
+                        print(f'Chunks length : {len_chunks}')
+                        res = gen_summary(summarizer, chunks, len_chunks, (min, max))
+                        text = ' '.join(res)
+                    st.write(text)
 
 if __name__ == '__main__':
     main()
