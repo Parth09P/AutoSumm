@@ -207,7 +207,7 @@ def main():
                 key = 'urlSlider',)
                 # do_sample = st.checkbox("Use sampling")
             else:
-                k = st.number_input('Insert number of sentences', min_value = 1, step = 1)
+                k = st.number_input('Insert number of sentences', min_value = 1, step = 1, key = 'numIpUrl')
         sentence = st.text_input('Please paste your URL :')
         #Example = https://towardsdatascience.com/a-bayesian-take-on-model-regularization-9356116b6457
         # https://medium.com/@randylaosat/a-beginners-guide-to-machine-learning-dfadc19f6caf
