@@ -122,7 +122,7 @@ def gen_summary(model, long_text, len_chunks, summ_range):
 
 def main():
     print('\nWaiting for input')
-    st.title("Automated Text Summarization")
+    st.title("Automated Text Summarization as a Service")
     activities = ["Using Text","Using URL"]
     tab1, tab2= st.tabs(activities)
     summarizer = load_summarizer()
